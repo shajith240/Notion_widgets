@@ -25,6 +25,14 @@ const WIDGETS = [
     embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/heatmap',
     tags: ['Habit', 'Tracking'],
   },
+  {
+    slug: 'streak',
+    name: 'Streak Counter',
+    description:
+      'Compact fire-animated streak card. Counts consecutive completed days from your Grind Tracker — designed for a narrow sidebar next to the heatmap.',
+    embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/streak',
+    tags: ['Streak', 'Habit'],
+  },
 ] as const;
 
 const COMING_SOON = [
