@@ -34,7 +34,7 @@ export async function fetchCompletedDates(): Promise<string[]> {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
-          next: { revalidate: 3600 },
+          cache: 'no-store',
         }
       );
 
@@ -54,6 +54,7 @@ export async function fetchCompletedDates(): Promise<string[]> {
       cursor = data.has_more ? data.next_cursor : undefined;
     } while (cursor);
 
+    console.log(`[grindTracker] fetched ${dates.length} completed dates`);
     return dates;
   } catch (err) {
     console.error('[grindTracker] Fetch failed:', err);

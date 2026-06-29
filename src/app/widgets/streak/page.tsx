@@ -2,7 +2,7 @@ import { fetchCompletedDates } from '@/lib/grindTracker';
 import { computeStreak } from '@/lib/streak';
 import StreakDisplay from './StreakDisplay';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export default async function StreakPage() {
   const dates = await fetchCompletedDates();
