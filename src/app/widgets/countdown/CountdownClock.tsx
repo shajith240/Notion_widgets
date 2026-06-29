@@ -61,7 +61,7 @@ const styles = {
     padding: '2rem',
   },
   label: {
-    color: '#7a2333',
+    color: '#6f9460',
     fontSize: '0.75rem',
     letterSpacing: '0.25em',
     textTransform: 'uppercase' as const,
@@ -80,7 +80,7 @@ const styles = {
     gap: '0.5rem',
   },
   digit: {
-    color: '#7a2333',
+    color: '#6f9460',
     fontFamily: "'Courier New', 'Menlo', monospace",
     fontSize: 'clamp(2.5rem, 8vw, 4rem)',
     fontWeight: '700' as const,
@@ -88,14 +88,14 @@ const styles = {
     letterSpacing: '0.02em',
   },
   unitLabel: {
-    color: '#7a2333',
+    color: '#6f9460',
     fontSize: '0.6rem',
     letterSpacing: '0.2em',
     textTransform: 'uppercase' as const,
     opacity: 0.55,
   },
   colon: {
-    color: '#7a2333',
+    color: '#6f9460',
     fontFamily: "'Courier New', monospace",
     fontSize: 'clamp(2.5rem, 8vw, 4rem)',
     fontWeight: '700' as const,
@@ -104,7 +104,7 @@ const styles = {
     opacity: 0.6,
   },
   expiredText: {
-    color: '#7a2333',
+    color: '#6f9460',
     fontFamily: "'Courier New', monospace",
     fontSize: '1.5rem',
     letterSpacing: '0.05em',
