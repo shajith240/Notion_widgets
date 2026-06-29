@@ -9,6 +9,14 @@ const WIDGETS = [
     embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/countdown',
     tags: ['Timer', 'Date'],
   },
+  {
+    slug: 'quote',
+    name: 'Quote of the Day',
+    description:
+      'A fresh motivational quote every day. 50 hand-picked quotes that rotate daily — simple, direct, no poetry.',
+    embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/quote',
+    tags: ['Daily', 'Motivation'],
+  },
 ] as const;
 
 const COMING_SOON = [
@@ -19,10 +27,6 @@ const COMING_SOON = [
   {
     name: 'Goal Progress',
     description: 'Animated progress bar reading a Notion number property.',
-  },
-  {
-    name: 'Quote of the Day',
-    description: 'Rotating quote pulled from a Notion database.',
   },
 ];
 
