@@ -7,7 +7,7 @@ const CELL = 13;
 const GAP = 3;
 const MONTH_GAP = 10;
 const COLORS = [
-  '#252320',              // 0 — empty
+  '#242424',              // 0 — empty (neutral, matches Notion #191919 bg)
   'rgba(111,148,96,0.28)', // 1 — light
   'rgba(111,148,96,0.58)', // 2 — medium
   '#6f9460',              // 3+ — full
@@ -148,7 +148,7 @@ export default function HeatmapGrid({
 // ── Styles ─────────────────────────────────────────────────────────────────
 const s = {
   page: {
-    backgroundColor: '#1c1917',
+    backgroundColor: '#191919',
     minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
@@ -159,6 +159,9 @@ const s = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '1rem',
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '6px',
+    padding: '1.25rem 1.5rem',
   },
   grid: {
     display: 'flex',
@@ -206,8 +209,8 @@ const s = {
   tooltip: {
     position: 'fixed' as const,
     transform: 'translate(-50%, -100%)',
-    backgroundColor: '#252320',
-    border: '1px solid #35322e',
+    backgroundColor: '#252525',
+    border: '1px solid rgba(255,255,255,0.09)',
     borderRadius: 4,
     padding: '5px 9px',
     fontFamily: "'Courier New', monospace",

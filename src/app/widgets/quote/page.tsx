@@ -21,7 +21,7 @@ export default function QuotePage() {
 
 const s = {
   page: {
-    backgroundColor: '#1c1917',
+    backgroundColor: '#191919',
     minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
@@ -35,6 +35,9 @@ const s = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '1.25rem',
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '6px',
+    padding: '1.75rem 1.75rem',
   },
   openQuote: {
     display: 'block',

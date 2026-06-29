@@ -52,7 +52,7 @@ function Colon() {
 
 const styles = {
   page: {
-    backgroundColor: '#1c1917',
+    backgroundColor: '#191919',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column' as const,

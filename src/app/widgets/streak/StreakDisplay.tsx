@@ -35,7 +35,7 @@ function WeekDots({ dates, today }: { dates: string[]; today: string }) {
           <div
             style={{
               ...wd.dot,
-              backgroundColor: day.done ? '#6f9460' : '#252220',
+              backgroundColor: day.done ? '#6f9460' : '#2a2a2a',
               boxShadow: day.done ? '0 0 5px rgba(111,148,96,0.5)' : 'none',
             }}
           />
@@ -136,7 +136,7 @@ export default function StreakDisplay({
 
 const s = {
   page: {
-    backgroundColor: '#1c1917',
+    backgroundColor: '#191919',
     minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
@@ -153,8 +153,8 @@ const s = {
     maxWidth: '300px',
     padding: '1rem 1rem',
     borderRadius: '14px',
-    backgroundColor: '#1e1b19',
-    border: '1px solid #252220',
+    backgroundColor: '#202020',
+    border: '1px solid rgba(255,255,255,0.07)',
   },
 
   // Left
@@ -169,7 +169,7 @@ const s = {
     width: 56,
     height: 56,
     borderRadius: '12px',
-    backgroundColor: '#242120',
+    backgroundColor: '#272727',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -194,7 +194,7 @@ const s = {
   divider: {
     width: '1px',
     height: '72px',
-    backgroundColor: '#252220',
+    backgroundColor: '#2a2a2a',
     flexShrink: 0 as const,
   },
 
@@ -239,7 +239,7 @@ const s = {
   barTrack: {
     width: '100%',
     height: '4px',
-    backgroundColor: '#252220',
+    backgroundColor: '#2a2a2a',
     borderRadius: '2px',
     overflow: 'hidden' as const,
   },
