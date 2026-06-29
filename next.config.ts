@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        // Correct MIME type for WASM — required for streaming compilation in browsers.
+        source: '/:path*.wasm',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/wasm',
+          },
+        ],
+      },
     ];
   },
 };
