@@ -5,7 +5,7 @@ const WIDGETS = [
     slug: 'countdown',
     name: 'Countdown Timer',
     description:
-      'Live countdown to a target date stored in your Notion database. Reads server-side on load, ticks every second client-side. No re-fetching from Notion every second.',
+      'Live countdown to a target date stored in your Notion database. Reads server-side on load, ticks every second client-side.',
     embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/countdown',
     tags: ['Timer', 'Date'],
   },
@@ -21,7 +21,7 @@ const WIDGETS = [
     slug: 'heatmap',
     name: 'Consistency Heatmap',
     description:
-      'GitHub-style activity heatmap reading completed tasks from your Notion database. 26 weeks of history, color-coded by daily completion count.',
+      'Month-based activity heatmap reading completed tasks from your Notion database. 6 months of history, color-coded by completion count.',
     embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/heatmap',
     tags: ['Habit', 'Tracking'],
   },
@@ -29,7 +29,7 @@ const WIDGETS = [
     slug: 'streak',
     name: 'Streak Counter',
     description:
-      'Compact fire-animated streak card. Counts consecutive completed days from your Grind Tracker — designed for a narrow sidebar next to the heatmap.',
+      'Compact fire-animated streak card. Counts consecutive completed days from your Grind Tracker with 7-day dot row.',
     embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/streak',
     tags: ['Streak', 'Habit'],
   },
@@ -39,6 +39,10 @@ const COMING_SOON = [
   {
     name: 'Goal Progress',
     description: 'Animated progress bar reading a Notion number property.',
+  },
+  {
+    name: 'Habit Calendar',
+    description: 'Monthly calendar view with per-day habit checkboxes.',
   },
 ];
 
@@ -65,11 +69,11 @@ export default function Home() {
         </h1>
         <p style={s.sub}>
           Live-updating widgets that read directly from Notion.
-          <br />
           Embed with one URL — no accounts, no limits.
         </p>
       </section>
 
+      {/* ── Live widgets ──────────────────────────────── */}
       <div style={s.sectionRow}>
         <span style={s.sectionLabel}>widgets</span>
         <div style={s.rule} />
@@ -112,7 +116,15 @@ export default function Home() {
             </div>
           </article>
         ))}
+      </section>
 
+      {/* ── Coming soon ───────────────────────────────── */}
+      <div style={{ ...s.sectionRow, marginTop: '0.5rem' }}>
+        <span style={s.sectionLabel}>coming soon</span>
+        <div style={s.rule} />
+      </div>
+
+      <section style={s.soonGrid}>
         {COMING_SOON.map((w) => (
           <article key={w.name} style={s.soonCard}>
             <span style={s.soonDot}>○</span>
@@ -140,7 +152,7 @@ const s = {
     minHeight: '100vh',
     color: '#e4e0d8',
     fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
-    maxWidth: '780px',
+    maxWidth: '1100px',
     margin: '0 auto',
     padding: '0 1.5rem',
   },
@@ -223,12 +235,12 @@ const s = {
     flexShrink: 0 as const,
   },
 
-  // ── Widget grid ──────────────────────────────────────────────────
+  // ── Widget gallery grid ──────────────────────────────────────────
   grid: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '0.75rem',
-    paddingBottom: '6rem',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '1rem',
+    marginBottom: '4rem',
   },
 
   // ── Live card ────────────────────────────────────────────────────
@@ -257,10 +269,10 @@ const s = {
   },
   preview: {
     margin: '0.875rem 1.125rem',
-    height: '220px',
+    height: '200px',
     borderRadius: '5px',
     overflow: 'hidden',
-    backgroundColor: '#1c1917',
+    backgroundColor: '#191919',
     border: '1px solid #1f1d1b',
   },
   cardBody: {
@@ -274,9 +286,9 @@ const s = {
     letterSpacing: '-0.01em',
   },
   cardDesc: {
-    fontSize: '0.82rem',
+    fontSize: '0.78rem',
     color: '#5e5a55',
-    lineHeight: 1.68,
+    lineHeight: 1.6,
     marginBottom: '1rem',
   },
   cardFooter: {
@@ -301,7 +313,13 @@ const s = {
     borderRadius: '3px',
   },
 
-  // ── Coming soon cards ────────────────────────────────────────────
+  // ── Coming soon grid ─────────────────────────────────────────────
+  soonGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+    gap: '0.75rem',
+    paddingBottom: '6rem',
+  },
   soonCard: {
     border: '1px solid #171512',
     borderRadius: '8px',
