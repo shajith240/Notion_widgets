@@ -17,13 +17,17 @@ const WIDGETS = [
     embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/quote',
     tags: ['Daily', 'Motivation'],
   },
+  {
+    slug: 'heatmap',
+    name: 'Consistency Heatmap',
+    description:
+      'GitHub-style activity heatmap reading completed tasks from your Notion database. 26 weeks of history, color-coded by daily completion count.',
+    embedUrl: 'https://shajith-notion-widgets.vercel.app/widgets/heatmap',
+    tags: ['Habit', 'Tracking'],
+  },
 ] as const;
 
 const COMING_SOON = [
-  {
-    name: 'Habit Streak',
-    description: 'Activity heatmap built from Notion checkbox history.',
-  },
   {
     name: 'Goal Progress',
     description: 'Animated progress bar reading a Notion number property.',
