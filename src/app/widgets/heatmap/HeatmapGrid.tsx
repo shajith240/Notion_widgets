@@ -2,30 +2,75 @@
 
 import { useState } from 'react';
 
-const WEEKS = 26;
-const CELL = 12;
+// ── Constants ──────────────────────────────────────────────────────────────
+const CELL = 13;
 const GAP = 3;
-const STRIDE = CELL + GAP;
-const LABEL_W = 14;
-const MONTH_H = 16;
+const MONTH_GAP = 10;
+const COLORS = [
+  '#252320',              // 0 — empty
+  'rgba(111,148,96,0.28)', // 1 — light
+  'rgba(111,148,96,0.58)', // 2 — medium
+  '#6f9460',              // 3+ — full
+] as const;
 
-function cellColor(count: number, inFuture: boolean): string {
-  if (inFuture) return 'transparent';
-  if (count === 0) return '#252320';
-  if (count === 1) return 'rgba(111, 148, 96, 0.28)';
-  if (count === 2) return 'rgba(111, 148, 96, 0.58)';
-  return '#6f9460';
+// ── Types ──────────────────────────────────────────────────────────────────
+interface HDay { date: string; count: number; level: number }
+interface HMonth { label: string; weeks: (HDay | null)[][] }
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function level(count: number) {
+  if (count <= 0) return 0;
+  if (count === 1) return 1;
+  if (count === 2) return 2;
+  return 3;
 }
 
-function fmtDate(dateStr: string): string {
+function fmtLong(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
+    month: 'long', day: 'numeric', year: 'numeric',
   });
 }
 
+// Build 6 months of weekly buckets (Sun–Sat columns), last month = today's month.
+function buildMonths(dates: string[], today: string): HMonth[] {
+  const counts: Record<string, number> = {};
+  for (const d of dates) counts[d] = (counts[d] ?? 0) + 1;
+
+  const [ty, tm, td] = today.split('-').map(Number);
+  const result: HMonth[] = [];
+
+  for (let i = 5; i >= 0; i--) {
+    let year = ty;
+    let month = tm - i;
+    while (month <= 0) { month += 12; year--; }
+
+    const label = new Date(year, month - 1, 1)
+      .toLocaleString('en-US', { month: 'short' });
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const isNow = year === ty && month === tm;
+    const lastDay = isNow ? td : daysInMonth;
+
+    const weeks: (HDay | null)[][] = [];
+    let week: (HDay | null)[] = Array(7).fill(null);
+
+    for (let day = 1; day <= lastDay; day++) {
+      const ds = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dow = new Date(year, month - 1, day).getDay(); // 0=Sun
+      const c = counts[ds] ?? 0;
+      week[dow] = { date: ds, count: c, level: level(c) };
+      if (dow === 6 || day === lastDay) {
+        weeks.push([...week]);
+        week = Array(7).fill(null);
+      }
+    }
+
+    result.push({ label, weeks });
+  }
+  return result;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
 export default function HeatmapGrid({
   dates,
   today,
@@ -34,124 +79,52 @@ export default function HeatmapGrid({
   today: string;
 }) {
   const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
-
-  // count completions per day
-  const counts: Record<string, number> = {};
-  for (const d of dates) {
-    counts[d] = (counts[d] ?? 0) + 1;
-  }
-
-  // compute start date: Sunday of the week that was 25 weeks before this week's Sunday
-  const [ty, tm, td] = today.split('-').map(Number);
-  const todayDate = new Date(ty, tm - 1, td);
-  const thisSunday = new Date(todayDate);
-  thisSunday.setDate(todayDate.getDate() - todayDate.getDay());
-  const startDate = new Date(thisSunday);
-  startDate.setDate(thisSunday.getDate() - (WEEKS - 1) * 7);
-
-  // cols[col][row]: col=week index (0=oldest), row=day of week (0=Sun)
-  const cols: { date: string; count: number; inFuture: boolean }[][] = [];
-  for (let c = 0; c < WEEKS; c++) {
-    cols[c] = [];
-    for (let r = 0; r < 7; r++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + c * 7 + r);
-      const y = d.getFullYear();
-      const mo = String(d.getMonth() + 1).padStart(2, '0');
-      const dy = String(d.getDate()).padStart(2, '0');
-      const dateStr = `${y}-${mo}-${dy}`;
-      cols[c][r] = {
-        date: dateStr,
-        count: counts[dateStr] ?? 0,
-        inFuture: dateStr > today,
-      };
-    }
-  }
-
-  // month labels: emit a label whenever the month changes across columns
-  const monthLabels: { col: number; label: string }[] = [];
-  let lastMo = -1;
-  for (let c = 0; c < WEEKS; c++) {
-    const d = new Date(cols[c][0].date + 'T00:00:00');
-    const mo = d.getMonth();
-    if (mo !== lastMo) {
-      lastMo = mo;
-      monthLabels.push({
-        col: c,
-        label: d.toLocaleString('en-US', { month: 'short' }),
-      });
-    }
-  }
-
+  const months = buildMonths(dates, today);
   const total = dates.length;
 
   return (
     <div style={s.page}>
       <div style={s.wrap}>
-        {/* Month labels */}
-        <div
-          style={{
-            height: MONTH_H,
-            position: 'relative',
-            marginLeft: LABEL_W + 6,
-          }}
-        >
-          {monthLabels.map(({ col, label }) => (
-            <span
-              key={col}
-              style={{
-                ...s.monthLabel,
-                position: 'absolute',
-                left: col * STRIDE,
-              }}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
 
-        {/* Day labels + grid */}
-        <div style={s.gridRow}>
-          <div style={s.dayLabels}>
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((abbr, i) => (
-              <span
-                key={i}
-                style={{
-                  ...s.dayLabel,
-                  visibility: i === 1 || i === 3 || i === 5 ? 'visible' : 'hidden',
-                }}
-              >
-                {abbr}
-              </span>
-            ))}
-          </div>
-
-          <div style={s.cols}>
-            {cols.map((col, ci) => (
-              <div key={ci} style={s.col}>
-                {col.map((cell, ri) => (
-                  <div
-                    key={ri}
-                    style={{
-                      ...s.cell,
-                      backgroundColor: cellColor(cell.count, cell.inFuture),
-                      cursor: cell.inFuture ? 'default' : 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (cell.inFuture) return;
-                      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                      const text =
-                        cell.count === 0
-                          ? `No completions — ${fmtDate(cell.date)}`
-                          : `${cell.count} completion${cell.count === 1 ? '' : 's'} — ${fmtDate(cell.date)}`;
-                      setTip({ text, x: r.left + r.width / 2, y: r.top });
-                    }}
-                    onMouseLeave={() => setTip(null)}
-                  />
+        {/* Months row */}
+        <div style={s.grid}>
+          {months.map((month, mi) => (
+            <div key={mi} style={s.monthCol}>
+              {/* Week columns */}
+              <div style={s.weekRow}>
+                {month.weeks.map((week, wi) => (
+                  <div key={wi} style={s.weekCol}>
+                    {week.map((day, ri) => (
+                      <div
+                        key={ri}
+                        style={{
+                          ...s.cell,
+                          backgroundColor: day ? COLORS[day.level] : 'transparent',
+                          cursor: day ? 'pointer' : 'default',
+                        }}
+                        onMouseEnter={
+                          day
+                            ? (e) => {
+                                const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                const text =
+                                  day.count === 0
+                                    ? `No completions — ${fmtLong(day.date)}`
+                                    : `${day.count} completion${day.count === 1 ? '' : 's'} — ${fmtLong(day.date)}`;
+                                setTip({ text, x: r.left + r.width / 2, y: r.top });
+                              }
+                            : undefined
+                        }
+                        onMouseLeave={() => setTip(null)}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
+
+              {/* Month label below */}
+              <p style={s.monthLabel}>{month.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* Stats */}
@@ -162,14 +135,9 @@ export default function HeatmapGrid({
         </p>
       </div>
 
+      {/* Tooltip */}
       {tip && (
-        <div
-          style={{
-            ...s.tooltip,
-            left: tip.x,
-            top: tip.y - 6,
-          }}
-        >
+        <div style={{ ...s.tooltip, left: tip.x, top: tip.y - 6 }}>
           {tip.text}
         </div>
       )}
@@ -177,6 +145,7 @@ export default function HeatmapGrid({
   );
 }
 
+// ── Styles ─────────────────────────────────────────────────────────────────
 const s = {
   page: {
     backgroundColor: '#1c1917',
@@ -189,60 +158,44 @@ const s = {
   wrap: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '0.75rem',
+    gap: '1rem',
   },
-  monthLabel: {
-    fontFamily: "'Courier New', monospace",
-    fontSize: '9px',
-    color: '#5a5652',
-    letterSpacing: '0.04em',
-    userSelect: 'none' as const,
-    whiteSpace: 'nowrap' as const,
-  },
-  gridRow: {
+  grid: {
     display: 'flex',
     alignItems: 'flex-start',
+    gap: MONTH_GAP,
+  },
+  monthCol: {
+    display: 'flex',
+    flexDirection: 'column' as const,
     gap: 6,
   },
-  dayLabels: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: GAP,
-    paddingTop: 1,
-    width: LABEL_W,
-    flexShrink: 0 as const,
-  },
-  dayLabel: {
-    fontFamily: "'Courier New', monospace",
-    fontSize: '9px',
-    color: '#4a4643',
-    height: CELL,
-    lineHeight: `${CELL}px`,
-    textAlign: 'right' as const,
-    userSelect: 'none' as const,
-  },
-  cols: {
+  weekRow: {
     display: 'flex',
     gap: GAP,
   },
-  col: {
-    display: 'flex',
-    flexDirection: 'column' as const,
+  weekCol: {
+    display: 'grid',
+    gridTemplateRows: `repeat(7, ${CELL}px)`,
     gap: GAP,
-    flexShrink: 0 as const,
   },
   cell: {
     width: CELL,
     height: CELL,
     borderRadius: 2,
-    flexShrink: 0 as const,
-    transition: 'opacity 0.1s',
+  },
+  monthLabel: {
+    fontFamily: "'Courier New', monospace",
+    fontSize: '10px',
+    color: '#5a5652',
+    letterSpacing: '0.06em',
+    textAlign: 'center' as const,
+    userSelect: 'none' as const,
   },
   stats: {
     fontFamily: "'Courier New', monospace",
     fontSize: '10px',
     letterSpacing: '0.04em',
-    paddingLeft: LABEL_W + 6,
   },
   statsNum: {
     color: '#6f9460',
