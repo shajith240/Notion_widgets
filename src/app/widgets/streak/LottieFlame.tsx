@@ -3,15 +3,13 @@
 import { useEffect, useRef } from 'react';
 import { DotLottie } from '@lottiefiles/dotlottie-web';
 
-export default function LottieFlame({ opacity }: { opacity: number }) {
+export default function LottieFlame({ opacity, size = 88 }: { opacity: number; size?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Set WASM URL before the DotLottie instance is created so the renderer
-    // fetches from our public/ file instead of its bundled/CDN path.
     DotLottie.setWasmUrl('/dotlottie-player.wasm');
 
     const dl = new DotLottie({
@@ -29,9 +27,9 @@ export default function LottieFlame({ opacity }: { opacity: number }) {
   return (
     <canvas
       ref={canvasRef}
-      width={176}
-      height={176}
-      style={{ width: 88, height: 88, opacity, display: 'block' }}
+      width={size * 2}
+      height={size * 2}
+      style={{ width: size, height: size, opacity, display: 'block', transition: 'opacity 0.3s' }}
     />
   );
 }
