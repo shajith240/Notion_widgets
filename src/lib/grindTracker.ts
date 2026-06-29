@@ -46,7 +46,7 @@ export async function fetchCompletedDates(): Promise<string[]> {
       const data = await res.json();
 
       for (const page of data.results ?? []) {
-        const dateProp = page.properties?.['Completed Date'];
+        const dateProp = page.properties?.['Scheduled Date'];
         const dateStr: string | undefined = dateProp?.date?.start;
         if (dateStr) dates.push(dateStr.slice(0, 10));
       }
