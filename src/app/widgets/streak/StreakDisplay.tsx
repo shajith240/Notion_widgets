@@ -2,148 +2,133 @@
 
 import dynamic from 'next/dynamic';
 
-function ProgressRing({ current, size = 156 }: { current: number; size?: number }) {
-  const milestones = [3, 7, 14, 30, 60, 100, 365];
-  const idx = milestones.findIndex((m) => current < m);
-  const next = idx === -1 ? 365 : milestones[idx];
-  const prev = idx > 0 ? milestones[idx - 1] : 0;
-  const pct = current === 0 ? 0 : Math.min((current - prev) / (next - prev), 1);
+const LottieFlame = dynamic(() => import('./LottieFlame'), {
+  ssr: false,
+  loading: () => <div style={{ width: 44, height: 44 }} />,
+});
 
-  const strokeW = 4;
-  const r = (size - strokeW * 2) / 2;
-  const circ = 2 * Math.PI * r;
+function getMilestone(n: number): { next: number; pct: number } {
+  const ms = [3, 7, 14, 30, 60, 100, 365];
+  const idx = ms.findIndex((m) => n < m);
+  if (idx === -1) return { next: 365, pct: 1 };
+  const next = ms[idx];
+  const prev = idx > 0 ? ms[idx - 1] : 0;
+  return { next, pct: Math.max(0, (n - prev) / (next - prev)) };
+}
+
+function WeekDots({ dates, today }: { dates: string[]; today: string }) {
+  const daySet = new Set(dates.map((d) => d.slice(0, 10)));
+  const DAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const [y, mo, d] = today.split('-').map(Number);
+    const dt = new Date(y, mo - 1, d);
+    dt.setDate(dt.getDate() - (6 - i));
+    const str = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    return { label: DAY[dt.getDay()], done: daySet.has(str) };
+  });
 
   return (
-    <svg
-      width={size}
-      height={size}
-      style={{ transform: 'rotate(-90deg)', display: 'block' }}
-      aria-hidden="true"
-    >
-      {/* Track */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="#242120"
-        strokeWidth={strokeW}
-      />
-      {/* Progress arc */}
-      {current > 0 && (
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="#6f9460"
-          strokeWidth={strokeW}
-          strokeLinecap="round"
-          strokeDasharray={`${circ * pct} ${circ}`}
-          style={{ filter: 'drop-shadow(0 0 5px rgba(111,148,96,0.5))' }}
-        />
-      )}
-      {/* Milestone pip at 100% (decorative dot at start position) */}
-      <circle
-        cx={size / 2}
-        cy={strokeW}
-        r={2.5}
-        fill={current > 0 ? '#6f9460' : '#242120'}
-        style={{ filter: current > 0 ? 'drop-shadow(0 0 3px rgba(111,148,96,0.6))' : 'none' }}
-      />
-    </svg>
+    <div style={wd.row}>
+      {week.map((day, i) => (
+        <div key={i} style={wd.item}>
+          <div
+            style={{
+              ...wd.dot,
+              backgroundColor: day.done ? '#6f9460' : '#252220',
+              boxShadow: day.done ? '0 0 5px rgba(111,148,96,0.5)' : 'none',
+            }}
+          />
+          <span style={wd.label}>{day.label}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
-const LottieFlame = dynamic(() => import('./LottieFlame'), {
-  ssr: false,
-  loading: () => <div style={{ width: 72, height: 72 }} />,
-});
+const wd = {
+  row: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  item: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.25rem',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+  },
+  label: {
+    fontSize: '0.48rem',
+    letterSpacing: '0.02em',
+    color: '#353230',
+    fontFamily: "'Geist Mono', 'Courier New', monospace",
+  },
+} as const;
 
-function getMilestone(n: number): { next: number; diff: number; pct: number } {
-  const ms = [3, 7, 14, 30, 60, 100, 365];
-  const idx = ms.findIndex((m) => n < m);
-  if (idx === -1) return { next: 365, diff: 0, pct: 1 };
-  const next = ms[idx];
-  const prev = idx > 0 ? ms[idx - 1] : 0;
-  return { next, diff: next - n, pct: Math.max(0, (n - prev) / (next - prev)) };
-}
-
-export default function StreakDisplay({ current, best }: { current: number; best: number }) {
+export default function StreakDisplay({
+  current,
+  best,
+  dates,
+  today,
+}: {
+  current: number;
+  best: number;
+  dates: string[];
+  today: string;
+}) {
   const active = current > 0;
-  const { next, diff, pct } = getMilestone(current);
+  const { next, pct } = getMilestone(current);
 
   return (
     <div style={s.page}>
-      <div
-        style={{
-          ...s.card,
-          border: `1px solid ${active ? 'rgba(111,148,96,0.14)' : '#232120'}`,
-          boxShadow: active
-            ? '0 0 0 1px rgba(111,148,96,0.06), 0 8px 48px rgba(0,0,0,0.4)'
-            : '0 8px 32px rgba(0,0,0,0.3)',
-        }}
-      >
-        {/* Ring wrapping the fire */}
-        <div style={s.ringWrap}>
-          <div style={s.ringLayer}>
-            <ProgressRing current={current} size={156} />
+      <div style={s.card}>
+
+        {/* Left column — icon + number */}
+        <div style={s.left}>
+          <div style={s.iconBox}>
+            <LottieFlame opacity={active ? 1 : 0.2} size={44} />
           </div>
-          <div style={s.flameLayer}>
-            <LottieFlame opacity={active ? 1 : 0.18} size={72} />
-          </div>
+          <span style={{ ...s.number, color: active ? '#ede9e1' : '#2e2b28' }}>
+            {current}
+          </span>
+          <span style={s.streakLabel}>day streak</span>
         </div>
 
-        {/* Hero number */}
-        <span
-          style={{
-            ...s.number,
-            color: active ? '#ede9e1' : '#2e2b28',
-          }}
-        >
-          {current}
-        </span>
+        {/* Divider */}
+        <div style={s.divider} />
 
-        {/* Label */}
-        <span style={s.dayLabel}>day streak</span>
+        {/* Right column — milestone + bar + days */}
+        <div style={s.right}>
+          <div style={s.milestoneRow}>
+            <span style={{ ...s.milestoneCurrent, color: active ? '#8ab07a' : '#353230' }}>
+              {current}d
+            </span>
+            <span style={s.milestoneSlash}>/</span>
+            <span style={s.milestoneNext}>{next}d</span>
+            {best > 0 && (
+              <span style={s.bestBadge}>best&nbsp;{best}d</span>
+            )}
+          </div>
 
-        {/* Milestone progress */}
-        <div style={s.milestoneWrap}>
-          <div style={s.track}>
+          <div style={s.barTrack}>
             <div
               style={{
-                ...s.fill,
+                ...s.barFill,
                 width: `${pct * 100}%`,
-                opacity: active ? 1 : 0.3,
+                opacity: active ? 1 : 0.25,
               }}
             />
           </div>
-          <div style={s.milestoneLabels}>
-            <span style={s.milestoneLeft}>
-              {active ? `${current}d` : '—'}
-            </span>
-            <span style={s.milestoneRight}>
-              {active && diff > 0
-                ? `${diff} to ${next}d`
-                : current >= 365
-                ? 'legendary'
-                : `next: ${next}d`}
-            </span>
-          </div>
+
+          <WeekDots dates={dates} today={today} />
         </div>
 
-        {/* Best streak */}
-        {best > 0 && (
-          <div style={s.bestRow}>
-            <span style={s.bestRule} />
-            <span style={s.bestText}>
-              best&nbsp;
-              <span style={{ color: active ? '#4d4a46' : '#2e2b28' }}>{best}</span>
-              &nbsp;{best === 1 ? 'day' : 'days'}
-            </span>
-            <span style={s.bestRule} />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -156,111 +141,113 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '2rem 1rem',
+    padding: '1.5rem 1rem',
     fontFamily: "'Inter', 'Geist', system-ui, sans-serif",
   },
   card: {
     display: 'flex',
+    flexDirection: 'row' as const,
+    alignItems: 'center',
+    gap: '1rem',
+    width: '100%',
+    maxWidth: '300px',
+    padding: '1rem 1rem',
+    borderRadius: '14px',
+    backgroundColor: '#1e1b19',
+    border: '1px solid #252220',
+  },
+
+  // Left
+  left: {
+    display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
-    width: '100%',
-    maxWidth: '216px',
-    padding: '2rem 1.5rem 1.5rem',
-    borderRadius: '20px',
-    backgroundColor: '#1e1b19',
-    gap: 0,
+    gap: '0.2rem',
+    flexShrink: 0 as const,
   },
-  ringWrap: {
-    position: 'relative' as const,
-    width: 156,
-    height: 156,
+  iconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: '12px',
+    backgroundColor: '#242120',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: '1.25rem',
-  },
-  ringLayer: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none' as const,
-  },
-  flameLayer: {
-    position: 'relative' as const,
-    zIndex: 1,
+    marginBottom: '0.25rem',
   },
   number: {
-    fontSize: 'clamp(4rem, 18vw, 5.5rem)',
+    fontSize: '2rem',
     fontWeight: '800' as const,
     lineHeight: 1,
-    letterSpacing: '-0.05em',
+    letterSpacing: '-0.04em',
     fontVariantNumeric: 'tabular-nums' as const,
     transition: 'color 0.3s',
-    marginBottom: '0.3rem',
   },
-  dayLabel: {
-    fontSize: '0.58rem',
-    letterSpacing: '0.24em',
+  streakLabel: {
+    fontSize: '0.5rem',
+    letterSpacing: '0.2em',
     textTransform: 'uppercase' as const,
     color: '#373430',
-    marginBottom: '1.5rem',
   },
-  milestoneWrap: {
-    width: '100%',
-    marginBottom: '1.25rem',
+
+  // Divider
+  divider: {
+    width: '1px',
+    height: '72px',
+    backgroundColor: '#252220',
+    flexShrink: 0 as const,
   },
-  track: {
+
+  // Right
+  right: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.55rem',
+    minWidth: 0,
+  },
+  milestoneRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '0.25rem',
+  },
+  milestoneCurrent: {
+    fontSize: '0.95rem',
+    fontWeight: '700' as const,
+    letterSpacing: '-0.02em',
+    fontVariantNumeric: 'tabular-nums' as const,
+    transition: 'color 0.3s',
+  },
+  milestoneSlash: {
+    fontSize: '0.65rem',
+    color: '#2e2b28',
+    fontFamily: "'Geist Mono', monospace",
+  },
+  milestoneNext: {
+    fontSize: '0.65rem',
+    color: '#353230',
+    fontFamily: "'Geist Mono', monospace",
+    flex: 1,
+  },
+  bestBadge: {
+    fontSize: '0.5rem',
+    letterSpacing: '0.05em',
+    color: '#353230',
+    fontFamily: "'Geist Mono', monospace",
+    whiteSpace: 'nowrap' as const,
+  },
+  barTrack: {
     width: '100%',
-    height: '2px',
+    height: '4px',
     backgroundColor: '#252220',
     borderRadius: '2px',
     overflow: 'hidden' as const,
-    marginBottom: '0.45rem',
   },
-  fill: {
+  barFill: {
     height: '100%',
     backgroundColor: '#6f9460',
     borderRadius: '2px',
-    boxShadow: '0 0 6px rgba(111,148,96,0.45)',
+    boxShadow: '0 0 8px rgba(111,148,96,0.5)',
     transition: 'width 0.7s cubic-bezier(0.4,0,0.2,1)',
-  },
-  milestoneLabels: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  milestoneLeft: {
-    fontSize: '0.56rem',
-    letterSpacing: '0.06em',
-    color: '#6f9460',
-    fontFamily: "'Geist Mono', 'Courier New', monospace",
-    opacity: 0.7,
-  },
-  milestoneRight: {
-    fontSize: '0.56rem',
-    letterSpacing: '0.06em',
-    color: '#353230',
-    fontFamily: "'Geist Mono', 'Courier New', monospace",
-  },
-  bestRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.625rem',
-    width: '100%',
-  },
-  bestRule: {
-    flex: 1,
-    height: '1px',
-    backgroundColor: '#252220',
-    display: 'block',
-  },
-  bestText: {
-    fontSize: '0.58rem',
-    letterSpacing: '0.06em',
-    color: '#35322f',
-    fontFamily: "'Geist Mono', 'Courier New', monospace",
-    whiteSpace: 'nowrap' as const,
   },
 } as const;

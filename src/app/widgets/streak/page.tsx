@@ -12,5 +12,5 @@ export default async function StreakPage() {
 
   const { current, best } = computeStreak(dates, today);
 
-  return <StreakDisplay current={current} best={best} />;
+  return <StreakDisplay current={current} best={best} dates={dates} today={today} />;
 }
