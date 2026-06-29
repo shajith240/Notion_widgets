@@ -5,10 +5,11 @@ const NOTION_VERSION = '2022-06-28';
 
 export async function fetchTargetDate(): Promise<string | null> {
   const token = process.env.NOTION_TOKEN;
-  const databaseId = process.env.NOTION_DATABASE_ID;
+  // COUNTDOWN_DB_ID avoids collision with any system-level NOTION_DATABASE_ID var
+  const databaseId = process.env.COUNTDOWN_DB_ID;
 
   if (!token || !databaseId) {
-    console.error('[notion] Missing NOTION_TOKEN or NOTION_DATABASE_ID env vars');
+    console.error('[notion] Missing NOTION_TOKEN or COUNTDOWN_DB_ID env vars');
     return null;
   }
 
@@ -43,10 +44,7 @@ export async function fetchTargetDate(): Promise<string | null> {
     const dateStr: string | undefined = dateProp?.date?.start;
 
     if (!dateStr) {
-      console.error(
-        '[notion] "Target Date" property missing or empty. Available properties:',
-        Object.keys(page.properties ?? {})
-      );
+      console.error('[notion] "Target Date" property missing or empty on first row');
       return null;
     }
 
