@@ -22,11 +22,13 @@ export default function QuotePage() {
 const s = {
   page: {
     backgroundColor: '#191919',
-    minHeight: '100vh',
+    height: '100vh',
+    overflow: 'hidden',
+    boxSizing: 'border-box' as const,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '2.5rem 2rem',
+    padding: '1.5rem 2rem',
     fontFamily: "'Courier New', monospace",
   },
   card: {

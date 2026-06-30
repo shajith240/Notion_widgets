@@ -53,7 +53,9 @@ function Colon() {
 const styles = {
   page: {
     backgroundColor: '#191919',
-    minHeight: '100vh',
+    height: '100vh',
+    overflow: 'hidden',
+    boxSizing: 'border-box' as const,
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',

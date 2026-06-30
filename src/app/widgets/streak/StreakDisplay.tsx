@@ -137,7 +137,9 @@ export default function StreakDisplay({
 const s = {
   page: {
     backgroundColor: '#191919',
-    minHeight: '100vh',
+    height: '100vh',
+    overflow: 'hidden',
+    boxSizing: 'border-box' as const,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

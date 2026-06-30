@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const CELL = 13;
 const GAP = 3;
 const MONTH_GAP = 10;
 const COLORS = [
-  '#242424',              // 0 — empty (neutral, matches Notion #191919 bg)
-  'rgba(111,148,96,0.28)', // 1 — light
-  'rgba(111,148,96,0.58)', // 2 — medium
-  '#6f9460',              // 3+ — full
+  '#242424',
+  'rgba(111,148,96,0.28)',
+  'rgba(111,148,96,0.58)',
+  '#6f9460',
 ] as const;
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -32,7 +32,6 @@ function fmtLong(dateStr: string) {
   });
 }
 
-// Build 6 months of weekly buckets (Sun–Sat columns), last month = today's month.
 function buildMonths(dates: string[], today: string): HMonth[] {
   const counts: Record<string, number> = {};
   for (const d of dates) counts[d] = (counts[d] ?? 0) + 1;
@@ -56,7 +55,7 @@ function buildMonths(dates: string[], today: string): HMonth[] {
 
     for (let day = 1; day <= lastDay; day++) {
       const ds = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const dow = new Date(year, month - 1, day).getDay(); // 0=Sun
+      const dow = new Date(year, month - 1, day).getDay();
       const c = counts[ds] ?? 0;
       week[dow] = { date: ds, count: c, level: level(c) };
       if (dow === 6 || day === lastDay) {
@@ -71,71 +70,85 @@ function buildMonths(dates: string[], today: string): HMonth[] {
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
-export default function HeatmapGrid({
-  dates,
-  today,
-}: {
-  dates: string[];
-  today: string;
-}) {
+export default function HeatmapGrid({ dates, today }: { dates: string[]; today: string }) {
   const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
   const months = buildMonths(dates, today);
   const total = dates.length;
 
+  // Scale the grid to fit the container — runs before first paint so no flash.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const wrap = wrapRef.current;
+    if (!container || !wrap) return;
+
+    const update = () => {
+      wrap.style.zoom = '1';
+      const natural = wrap.scrollWidth;
+      const available = container.clientWidth;
+      wrap.style.zoom = natural > available ? String(available / natural) : '1';
+    };
+
+    const ro = new ResizeObserver(update);
+    ro.observe(container);
+    update();
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <div style={s.page}>
-      <div style={s.wrap}>
+      {/* containerRef measures available width; wrapRef gets zoom applied */}
+      <div ref={containerRef} style={s.scaler}>
+        <div ref={wrapRef} style={s.wrap}>
 
-        {/* Months row */}
-        <div style={s.grid}>
-          {months.map((month, mi) => (
-            <div key={mi} style={s.monthCol}>
-              {/* Week columns */}
-              <div style={s.weekRow}>
-                {month.weeks.map((week, wi) => (
-                  <div key={wi} style={s.weekCol}>
-                    {week.map((day, ri) => (
-                      <div
-                        key={ri}
-                        style={{
-                          ...s.cell,
-                          backgroundColor: day ? COLORS[day.level] : 'transparent',
-                          cursor: day ? 'pointer' : 'default',
-                        }}
-                        onMouseEnter={
-                          day
-                            ? (e) => {
-                                const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                const text =
-                                  day.count === 0
-                                    ? `No completions — ${fmtLong(day.date)}`
-                                    : `${day.count} completion${day.count === 1 ? '' : 's'} — ${fmtLong(day.date)}`;
-                                setTip({ text, x: r.left + r.width / 2, y: r.top });
-                              }
-                            : undefined
-                        }
-                        onMouseLeave={() => setTip(null)}
-                      />
-                    ))}
-                  </div>
-                ))}
+          <div style={s.grid}>
+            {months.map((month, mi) => (
+              <div key={mi} style={s.monthCol}>
+                <div style={s.weekRow}>
+                  {month.weeks.map((week, wi) => (
+                    <div key={wi} style={s.weekCol}>
+                      {week.map((day, ri) => (
+                        <div
+                          key={ri}
+                          style={{
+                            ...s.cell,
+                            backgroundColor: day ? COLORS[day.level] : 'transparent',
+                            cursor: day ? 'pointer' : 'default',
+                          }}
+                          onMouseEnter={
+                            day
+                              ? (e) => {
+                                  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                  const text =
+                                    day.count === 0
+                                      ? `No completions — ${fmtLong(day.date)}`
+                                      : `${day.count} completion${day.count === 1 ? '' : 's'} — ${fmtLong(day.date)}`;
+                                  setTip({ text, x: r.left + r.width / 2, y: r.top });
+                                }
+                              : undefined
+                          }
+                          onMouseLeave={() => setTip(null)}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <p style={s.monthLabel}>{month.label}</p>
               </div>
+            ))}
+          </div>
 
-              {/* Month label below */}
-              <p style={s.monthLabel}>{month.label}</p>
-            </div>
-          ))}
+          <p style={s.stats}>
+            <span style={s.statsNum}>{total}</span>
+            {' completion'}{total !== 1 ? 's' : ''}{' '}
+            <span style={s.statsMuted}>in the last 6 months</span>
+          </p>
+
         </div>
-
-        {/* Stats */}
-        <p style={s.stats}>
-          <span style={s.statsNum}>{total}</span>
-          {' completion'}{total !== 1 ? 's' : ''}{' '}
-          <span style={s.statsMuted}>in the last 6 months</span>
-        </p>
       </div>
 
-      {/* Tooltip */}
       {tip && (
         <div style={{ ...s.tooltip, left: tip.x, top: tip.y - 6 }}>
           {tip.text}
@@ -149,14 +162,20 @@ export default function HeatmapGrid({
 const s = {
   page: {
     backgroundColor: '#191919',
-    minHeight: '100vh',
+    height: '100vh',
+    overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '2rem 2.5rem',
+    padding: '1.5rem 2rem',
+    boxSizing: 'border-box' as const,
+  },
+  // Full-width measure container — zoom is applied to the child, not here
+  scaler: {
+    width: '100%',
   },
   wrap: {
-    display: 'flex',
+    display: 'inline-flex',
     flexDirection: 'column' as const,
     gap: '1rem',
     border: '1px solid rgba(255,255,255,0.07)',
